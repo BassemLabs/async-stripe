@@ -555,7 +555,18 @@ impl Webhook {
             return Err(WebhookError::BadTimestamp(signature.t));
         }
 
-        Ok(serde_json::from_str(payload)?)
+        // --- Sanitize the JSON to prevent recursive deserialization issues ---
+        let mut json_value: serde_json::Value = serde_json::from_str(payload)
+            .map_err(|_| WebhookError::BadJson)?;
+    
+        strip_dangerous_fields(&mut json_value);
+    
+        // Convert sanitized JSON back to string
+        let sanitized_payload = serde_json::to_string(&json_value)
+            .map_err(|_| WebhookError::BadJson)?;
+    
+        // Now deserialize the sanitized event
+        Ok(serde_json::from_str(&sanitized_payload)?)
     }
 }
 
@@ -585,6 +596,28 @@ impl<'r> Signature<'r> {
         let t = headers.get("t").ok_or(WebhookError::BadSignature)?;
         let v1 = headers.get("v1").ok_or(WebhookError::BadSignature)?;
         Ok(Signature { t: t.parse::<i64>().map_err(WebhookError::BadHeader)?, v1 })
+    }
+}
+
+fn strip_dangerous_fields(value: &mut serde_json::Value) {
+    if let serde_json::Value::Object(map) = value {
+        if let Some(obj) = map.get_mut("data") {
+            if let Some(obj) = obj.get_mut("object") {
+                if let Some(payment_method_details) = obj.get_mut("payment_method_details") {
+                    if let Some(card) = payment_method_details.get_mut("card") {
+                        card.as_object_mut().map(|card_map| {
+                            card_map.remove("three_d_secure");
+                            card_map.remove("wallet");
+                            card_map.remove("extended_authorization");
+                            card_map.remove("incremental_authorization");
+                            card_map.remove("multicapture");
+                            card_map.remove("overcapture");
+                            card_map.remove("network_token");
+                        });
+                    }
+                }
+            }
+        }
     }
 }
 
