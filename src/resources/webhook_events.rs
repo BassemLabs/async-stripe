@@ -556,14 +556,12 @@ impl Webhook {
         }
 
         // --- Sanitize the JSON to prevent recursive deserialization issues ---
-        let mut json_value: serde_json::Value = serde_json::from_str(payload)
-            .map_err(|_| WebhookError::BadJson)?;
+        let mut json_value: serde_json::Value = serde_json::from_str(payload)?;
     
         strip_dangerous_fields(&mut json_value);
     
         // Convert sanitized JSON back to string
-        let sanitized_payload = serde_json::to_string(&json_value)
-            .map_err(|_| WebhookError::BadJson)?;
+        let sanitized_payload = serde_json::to_string(&json_value)?;
     
         // Now deserialize the sanitized event
         Ok(serde_json::from_str(&sanitized_payload)?)
