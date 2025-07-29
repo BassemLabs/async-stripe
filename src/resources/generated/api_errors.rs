@@ -37,10 +37,10 @@ pub struct ApiErrors {
     pub param: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub payment_intent: Option<PaymentIntent>,
+    pub payment_intent: Option<Box<PaymentIntent>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub payment_method: Option<PaymentMethod>,
+    pub payment_method: Option<Box<PaymentMethod>>,
 
     /// If the error is specific to the type of payment method, the payment method type that had a problem.
     ///
@@ -53,7 +53,7 @@ pub struct ApiErrors {
     pub request_log_url: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub setup_intent: Option<SetupIntent>,
+    pub setup_intent: Option<Box<SetupIntent>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source: Option<PaymentSource>,
