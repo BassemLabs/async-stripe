@@ -132,7 +132,7 @@ pub struct Charge {
     pub payment_method: Option<String>,
 
     /// Details about the payment method at the time of the transaction.
-    pub payment_method_details: Option<PaymentMethodDetails>,
+    pub payment_method_details: Option<Box<PaymentMethodDetails>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub radar_options: Option<RadarRadarOptions>,
